@@ -28,12 +28,12 @@ to contribution of different bias parameters.
 
 We provide a script "main.py" which can be directly run as follows: 
 ```python
-python main.py --pfile path_to_linear_ps_file
+  python main.py -- pfile path_to_linear_ps_file
 ```
 
 - Other arguments that can be provided are can be seen by calling: 
 ```python
-python main.py --help
+  python main.py -- help
 ```
 
 - Some of the important arguments are:
@@ -51,9 +51,9 @@ Other parameters such as --qfile and --rfile can be specified to point to the sa
 
 - Basic syntax to call it in jupyter notebooks or as a part of other code is: 
 ```python
-import cleftpool as cpool
-cl = cpool.CLEFT(pfile = pfile,  npool=32)
-pk = cpool.make_table(cl, kmin = 0.002, kmax = 1, nk = 200, npool=32, z = 1, M = 0.3)
+  import cleftpool as cpool
+  cl = cpool.CLEFT(pfile = pfile,  npool=32)
+  pk = cpool.make_table(cl, kmin = 0.002, kmax = 1, nk = 200, npool=32, z = 1, M = 0.3)
 ```
 
 - Timing: With 32 cores on a single node of Cori-jupyter hub, it takes ~35 seconds to

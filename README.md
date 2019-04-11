@@ -28,12 +28,12 @@ to contribution of different bias parameters.
 
 We provide a script "main.py" which can be directly run as follows: 
 ```python
-python main.py \-\-pfile path_to_linear_ps_file
+python main.py --pfile path_to_linear_ps_file
 ```
 
 - Other arguments that can be provided are can be seen by calling: 
 ```python
-python main.py \-\-help
+python main.py --help
 ```
 
 - Some of the important arguments are:
@@ -59,6 +59,5 @@ pk = cpool.make_table(cl, kmin = 0.002, kmax = 1, nk = 200, npool=32, z = 1, M =
 - Timing: With 32 cores on a single node of Cori-jupyter hub, it takes ~35 seconds to
 compute power spectra at 200 k-values.
 
-<aside class="notice">
-The code uses package *mcfit* to do bessel integrals in the file qfuncpool.py. This is handled by function *dosph* in class Qfuck and it takes in the integration ranges 'q1' and 'q2'. While the current set-up for these values has been tested for many cosmologies, it has the potential of outputing 'nans' in some rare cases. This can be solved by changing the tilt or the said intergation ranges for the corresponding function. 
-</aside>
+
+*The code uses package 'mcfit' to do bessel integrals in the file qfuncpool.py. This is handled by function 'dosph' in class 'Qfunc' and it takes in the integration ranges 'q1' and 'q2'. While the current set-up for these values has been tested for many cosmologies, it has the potential of outputing 'nans' in some rare cases. This can be solved by changing the tilt or the said intergation ranges for the corresponding function*

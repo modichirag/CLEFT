@@ -21,7 +21,7 @@ class CLEFT():
     '''
     
     def __init__(self, k = None, p = None, pfile = None, qfile = None, rfile = None, ensfile = None, \
-                 npool = 4, extrapker = True, saveqfile = None, saveQRfile = None):
+                 npool = 4, extrapker = True, saveqfile = None, saveQRfile = None, order=2):
         if pfile is None:
             if p is None:
                 print("Specify the power sepctrum file or the array")
@@ -29,9 +29,11 @@ class CLEFT():
             k, p = np.loadtxt(pfile, unpack = True)
         self.kp = k
         self.p = p
+        self.order = order
+
         if ensfile is None:
             self.qf = Qfunc(k, p, Qfile=qfile, Rfile = rfile, npool = npool, \
-                            extrapker = extrapker, saveqfile = saveqfile)
+                            extrapker = extrapker, saveqfile = saveqfile, order=self.order)
             print("Q & R kernels created")
 
             self.setup_dm()
@@ -48,8 +50,7 @@ class CLEFT():
         self.renorm = numpy.sqrt(numpy.pi/2.) #mcfit normaliztion
         self.tpi2 = 2*numpy.pi**2.
         self.jn = 20 #number of bessels to sum over
-
-    
+        
     def setup_dm(self):
         qf = self.qf
 
@@ -71,28 +72,37 @@ class CLEFT():
         self.yq = (1*self.Ylin/self.qv)
 
         #Loop
-        self.xi00loop = qf.xi0loop0()
-        xi0loop = qf.xi0loop()[1] 
-        xi2loop = qf.xi2loop()[1]
-        self.Xloop = 2/3.*(self.xi00loop - xi0loop - xi2loop)
-        self.Yloop = 2*xi2loop
-        self.XYloop = (self.Xloop + self.Yloop)
-        self.sigmaloop = self.XYloop[-1]
-        
-        #Loop2
-        self.xi1loop = qf.xi1loop(tilt = 0.5)[1]
-        self.xi3loop = qf.xi3loop(tilt = 0.5)[1]
+        if self.order == 2:
+            self.xi00loop = qf.xi0loop0()
+            xi0loop = qf.xi0loop()[1] 
+            xi2loop = qf.xi2loop()[1]
+            self.Xloop = 2/3.*(self.xi00loop - xi0loop - xi2loop)
+            self.Yloop = 2*xi2loop
+            self.XYloop = (self.Xloop + self.Yloop)
+            self.sigmaloop = self.XYloop[-1]
 
+            #Loop2
+            self.xi1loop = qf.xi1loop(tilt = 0.5)[1]
+            self.xi3loop = qf.xi3loop(tilt = 0.5)[1]
+        else:
+            self.Xloop, self.Yloop, self.XYloop, self.xi1loop, self.xi3loop = [np.zeros_like(self.qv) for i in range(5)]
+            self.sigmaloop = 0
         
     def setup_blocal(self):
         qf = self.qf
-        self.x10 = qf.x10()[1]
-        self.y10 = qf.y10()[1]
+
         self.u10 = qf.u10()[1]
-        self.u30 = qf.u3()[1]
-        self.u11 = qf.u11()[1]
-        self.u20 = qf.u20()[1]
         self.corr = qf.corr()[1]
+
+        if self.order == 2:
+            self.x10 = qf.x10()[1]
+            self.y10 = qf.y10()[1]
+            self.u11 = qf.u11()[1]
+            self.u20 = qf.u20()[1]
+            self.u30 = qf.u3()[1]
+        else:
+            self.x10, self.y10, self.u11, self.u20, self.u30 = [np.zeros_like(self.qv) for i in range(5)]
+                                                            
         #qil,  qih = np.where(self.qv>1e-2)[0][0], np.where(self.qv>300)[0][0]
         #tpi = qf.loginterp(self.qv[qil:qih], tp[qil:qih])(self.qv)
 
@@ -101,13 +111,17 @@ class CLEFT():
         js = qf.jshear()
         js2 = qf.js2()
 
-        self.chi = 4/3.*js2[1]**2
+        self.chi = 4/3.*js2[1]**2 # this is actually \chi12 in appendix
+        self.zeta = qf.zeta()[1]
         self.v12 = 4*js[1]*js2[1]
+        #terms for Upsilon
         self.x20 = 4*js[2]**2
         self.y20 = 2*(3*js[1]**2 + 4*js[1]*js[2] + 2*js[1]*js[3] + 2*js[2]**2 + 4*js[2]*js[3] + js[3]**2)
-        self.v10 = qf.v10()[1]
-        self.zeta = qf.zeta()[1]
-
+        
+        if self.order == 2:
+            self.v10 = qf.v10()[1]
+        else:
+            self.v10 = np.zeros_like(self.qv)
 
     def readens(self, fname):
 
@@ -219,7 +233,7 @@ def integrate(func, pool, taylor = 0):
     return toret
 
 
-def make_table(cl, kmin = 1e-3, kmax = 3, nk = 100, npool = 2, z = 0, M = 0.3):
+def make_table(cl, kmin = 1e-3, kmax = 3, nk = 100, npool = 2, z = 0, M = 0.3, order=2):
     '''Make a table of different terms of P(k) between a given
     'kmin', 'kmax' and for 'nk' equally spaced values in log10 of k.
     Called with a CLEFT object that has all the kernels.
@@ -257,8 +271,11 @@ def make_table(cl, kmin = 1e-3, kmax = 3, nk = 100, npool = 2, z = 0, M = 0.3):
 
     pktable[:, 0] = kv[:]        
     pktable[:, 1] = integrate(func = za, pool = pool)
-    pktable[:, 2] = integrate(aloop, taylor = 2, pool = pool)
-    pktable[:, 3] = integrate(wloop, taylor = 3, pool = pool)
+    if order == 1:
+        pktable[:, 2], pktable[:, 3] = np.zeros_like(kv), np.zeros_like(kv)
+    else:
+        pktable[:, 2] = integrate(aloop, taylor = 2, pool = pool)
+        pktable[:, 3] = integrate(wloop, taylor = 3, pool = pool)
     pktable[:, 4] = integrate(b1, pool = pool)
     pktable[:, 5] = integrate(b1sq, pool = pool)
     pktable[:, 6] = integrate(b2, pool = pool)

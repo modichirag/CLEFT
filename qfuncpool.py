@@ -12,7 +12,7 @@ from statsmodels.nonparametric.smoothers_lowess import lowess
 
 class Qfunc:
 
-    def __init__(self, k, p, Qfile = None, Rfile = None, npool = 4, extrapker = True, saveqfile = None):
+    def __init__(self, k, p, Qfile = None, Rfile = None, npool = 4, extrapker = True, saveqfile = None, order=2):
         
         self.kp = k
         self.p = p
@@ -23,24 +23,26 @@ class Qfunc:
         self.kint = numpy.logspace(-5, 6, 1e4)
         self.npool = npool
         self.extrapker = extrapker #If the kernels should be extrapolated. True recommended
+        self.order = order
 
-        if Qfile is None:
-            self.kq, self.Q1, self.Q2, self.Q3, self.Q5, self.Q8, self.Qs2 = self.calc_Q()
-        else:
-            self.kq, self.Q1, self.Q2, self.Q3, self.Q5, self.Q8, self.Qs2  = numpy.loadtxt(Qfile, unpack=True)
-        self.ilQ1 = self.loginterp(self.kq, self.Q1, rp = -5)
-        self.ilQ2 = self.loginterp(self.kq, self.Q2, rp = -5)
-        self.ilQ3 = self.loginterp(self.kq, self.Q3, rp = -5)
-        self.ilQ5 = self.loginterp(self.kq, self.Q5, rp = -5)
-        self.ilQ8 = self.loginterp(self.kq, self.Q8, rp = -5)
-        self.ilQs2 = self.loginterp(self.kq, self.Qs2, rp = -5)
+        if self.order == 2:
+            if Qfile is None:
+                self.kq, self.Q1, self.Q2, self.Q3, self.Q5, self.Q8, self.Qs2 = self.calc_Q()
+            else:
+                self.kq, self.Q1, self.Q2, self.Q3, self.Q5, self.Q8, self.Qs2  = numpy.loadtxt(Qfile, unpack=True)
+            self.ilQ1 = self.loginterp(self.kq, self.Q1, rp = -5)
+            self.ilQ2 = self.loginterp(self.kq, self.Q2, rp = -5)
+            self.ilQ3 = self.loginterp(self.kq, self.Q3, rp = -5)
+            self.ilQ5 = self.loginterp(self.kq, self.Q5, rp = -5)
+            self.ilQ8 = self.loginterp(self.kq, self.Q8, rp = -5)
+            self.ilQs2 = self.loginterp(self.kq, self.Qs2, rp = -5)
 
-        if Rfile is None:
-            self.kr, self.R1, self.R2 = self.calc_R()
-        else:
-            self.kr, self.R1, self.R2  = numpy.loadtxt(Rfile, unpack=True)
-        self.ilR1 = self.loginterp(self.kr, self.R1)
-        self.ilR2 = self.loginterp(self.kr, self.R2)
+            if Rfile is None:
+                self.kr, self.R1, self.R2 = self.calc_R()
+            else:
+                self.kr, self.R1, self.R2  = numpy.loadtxt(Rfile, unpack=True)
+            self.ilR1 = self.loginterp(self.kr, self.R1)
+            self.ilR2 = self.loginterp(self.kr, self.R2)
 
         if saveqfile is not None:
             self.save_qfunc(saveqfile)
@@ -363,8 +365,8 @@ class Qfunc:
         integrand /= (1.*self.tpi2)
         return self.dosph(2, kint, integrand, tilt = tilt, q1 = 1e-5, q2 = 500)
 
-    def v10(self, kint = None, tilt = 1.5):    
-        if kint is None:
+    def v10(self, kint = None, tilt = 1.5): # only 1loop term
+        if kint is None:        
             kint = self.kint
         integrand = (-2/7.)*self.ilQs2(kint)
         integrand /= (kint * self.tpi2)

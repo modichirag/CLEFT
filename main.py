@@ -17,6 +17,7 @@ def parse_arguments():
    parser.add_argument('--saveq', default = False, type = bool, help ="Save Q kernels; saved in the directory of input spectrum")
    parser.add_argument('--saver', default = False, type = bool, help ="Save R kernels; saved in the directory of input spectrum")
    parser.add_argument('--saveqfunc', default = False, type = bool, help ="Save intermediate q-functions created; saved in the directory of input spectrum")
+   parser.add_argument('--order', default=2, type=np.int, help='Order of PT')
    args = parser.parse_args()
 
    return args
@@ -48,7 +49,7 @@ if __name__=="__main__":
             qfuncfile = None
 
       #Create kernels
-      cl = cpool.CLEFT(pfile = args.pfile, npool = args.npool, qfile = args.qfile, rfile = args.rfile, saveqfile=qfuncfile);
+      cl = cpool.CLEFT(pfile = args.pfile, npool = args.npool, qfile = args.qfile, rfile = args.rfile, saveqfile=qfuncfile, order=args.order);
       ##Save them
       if args.saveq:
          header = 'k[h/Mpc]   Q1   Q2    Q3    Q5    Q8     Qs2    \n'
@@ -58,7 +59,7 @@ if __name__=="__main__":
          np.savetxt(rfile, np.array([cl.qf.kr, cl.qf.R1, cl.qf.R2]).T, fmt='%0.4e', header=header)
 
       #Calculate spectrum
-      pk = cpool.make_table(cl, nk = args.nk, kmin = args.kmin, kmax = args.kmax, npool = args.npool, z = args.z, M = args.M)
+      pk = cpool.make_table(cl, nk = args.nk, kmin = args.kmin, kmax = args.kmax, npool = args.npool, z = args.z, M = args.M, order=args.order)
 
       ##Save it
       header = "k[h/Mpc]   P_Zel   P_A    P_W    P_d    P_dd     P_d^2    P_d^2d^2  P_dd^2    P_s^2    P_ds^2    P_d^2s^2   P_s^2s^2   P_D2d     P_dD2d\n"

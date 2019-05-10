@@ -233,7 +233,7 @@ def integrate(func, pool, taylor = 0):
     return toret
 
 
-def make_table(cl, kmin = 1e-3, kmax = 3, nk = 100, npool = 2, z = 0, M = 0.3, order=2):
+def make_table(cl, kmin = 1e-3, kmax = 3, nk = 100, npool = 2, z = 0, M = 0.3):
     '''Make a table of different terms of P(k) between a given
     'kmin', 'kmax' and for 'nk' equally spaced values in log10 of k.
     Called with a CLEFT object that has all the kernels.
@@ -271,7 +271,7 @@ def make_table(cl, kmin = 1e-3, kmax = 3, nk = 100, npool = 2, z = 0, M = 0.3, o
 
     pktable[:, 0] = kv[:]        
     pktable[:, 1] = integrate(func = za, pool = pool)
-    if order == 1:
+    if cl.order == 1:
         pktable[:, 2], pktable[:, 3] = np.zeros_like(kv), np.zeros_like(kv)
     else:
         pktable[:, 2] = integrate(aloop, taylor = 2, pool = pool)
@@ -337,7 +337,7 @@ def bs2(  k, l):
     return  - k**2 *(x20 + y20) + 2*l*y20/Ylin -2*qv* bool(l)*v10/Ylin
 
 def b1bs2(  k, l):
-    return   -1*qv* bool(l)*v12/Ylin
+    return   -1*qv* bool(l)*v12/Ylin *2 #*2 cz possible typo in table B.3 of CLEFT_GSM. See B.1
 
 def b2bs2( k, l):
     return   chi

@@ -1,8 +1,7 @@
 # Power spectrum code
 
-Parallelized python code to compute the mode-coupling integrals and hence the real-space
-power spectrum of biased tracers from Convolution Lagrangian Effective Field
-Theory, as described in:
+Parallelized python code to compute the tree-level and 1-loop mode-coupling integrals and hence the real-space
+power spectrum of biased tracers from Convolution Lagrangian Effective Field Theory, as described in:
 
 Z.Vlah, E.Castorina, M.White
 
@@ -23,7 +22,8 @@ which you will need to install.
 
 The main piece of code is in cleftpool.py, which has CLEFT class to create PT kernels and make_table function
 in the same file uses these kernels to create a table of P(k) where different columns correspond
-to contribution of different bias parameters.
+to contribution of different bias parameters. The CLEFT class also takes in an 'order' argument which can
+be 1 or 2 (default) to do ZA or 1-loop perturbation theory.
 
 
 We provide a script "main.py" which can be directly run as follows: 
@@ -46,13 +46,14 @@ We provide a script "main.py" which can be directly run as follows:
   - kmax: the maximum k value, default=3
   - k, p: if 'pfile' is not specified, one can altternatively pass in the k, p numpy arrays for linear power spectrum<br>
   Either of (k, p) or (pfile) argument is required to be passed in
+  - order: 1 or 2, order of perturbation theory, default=2
 
 Other parameters such as --qfile and --rfile can be specified to point to the save kernels in order to speed up the code when computing power spectrum for same cosmology.
 
 - Basic syntax to call it in jupyter notebooks or as a part of other code is: 
 ```python
   import cleftpool as cpool
-  cl = cpool.CLEFT(pfile = pfile,  npool=32)
+  cl = cpool.CLEFT(pfile = pfile,  npool=32, order=2)
   pk = cpool.make_table(cl, kmin = 0.002, kmax = 1, nk = 200, npool=32, z = 1, M = 0.3)
 ```
 
